@@ -49,7 +49,14 @@ regd_users.post("/login", (req,res) => {
         req.session.authorization = {
             accessToken, username
         }
-        return res.status(200).send("User successfully logged in");
+
+        // Save session explicitly
+        req.session.save((err) => {
+            if (err) {
+                return res.status(500).json({ message: "Error saving session" });
+            }
+            return res.status(200).send("User successfully logged in");
+        });
     } else {
         return res.status(208).json({ message: "Invalid Login. Check username and password" });
     }
@@ -57,8 +64,32 @@ regd_users.post("/login", (req,res) => {
 
 // Add a book review
 regd_users.put("/auth/review/:isbn", (req, res) => {
-  //Write your code here
-  return res.status(300).json({message: "Yet to be implemented"});
+    const isbn = req.params.isbn;
+    const review = req.query.review;
+    const username = req.session.authorization.username;
+    
+    // Check if review is provided
+    if (!review) {
+      return res.status(400).json({ message: "Review is required" });
+    }
+    
+    // Check if book exists
+    if (!books[isbn]) {
+      return res.status(404).json({ message: "Book not found" });
+    }
+    
+    // Initialize reviews object if it doesn't exist
+    if (!books[isbn].reviews) {
+      books[isbn].reviews = {};
+    }
+    
+    // Add or modify the review for this user
+    books[isbn].reviews[username] = review;
+    
+    return res.status(200).json({ 
+      message: "Review successfully added/updated",
+      reviews: books[isbn].reviews 
+    });
 });
 
 module.exports.authenticated = regd_users;
