@@ -96,14 +96,27 @@ public_users.get('/author/:author', function (req, res) {
 // Get all books based on title
 public_users.get('/title/:title',function (req, res) {
     const title = req.params.title?.toLowerCase();
-    const booksByTitle = Object.values(books)
-                                .filter(book => book.title.toLowerCase() === title);
-
-    if (booksByTitle.length > 0) {
-        res.json(booksByTitle);
-    } else {
-        res.status(404).json({ message: "No books found for this title" });
-    }
+    
+    // Create a Promise to get books by title
+    const getBooksByTitle = new Promise((resolve, reject) => {
+        const booksByTitle = Object.values(books)
+                                    .filter(book => book.title.toLowerCase() === title);
+        
+        if (booksByTitle.length > 0) {
+            resolve(booksByTitle);
+        } else {
+            reject(new Error("No books found for this title"));
+        }
+    });
+    
+    // Use Promise callbacks with .then() and .catch()
+    getBooksByTitle
+        .then((booksList) => {
+            res.status(200).json(booksList);
+        })
+        .catch((error) => {
+            res.status(404).json({ message: error.message });
+        });
 });
 
 //  Get book review
