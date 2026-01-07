@@ -70,14 +70,27 @@ public_users.get('/isbn/:isbn',function (req, res) {
 // Get book details based on author
 public_users.get('/author/:author', function (req, res) {
     const author = req.params.author?.toLowerCase();
-    const booksByAuthor = Object.values(books)
-                                .filter(book => book.author.toLowerCase() === author);
-
-    if (booksByAuthor.length > 0) {
-        res.json(booksByAuthor);
-    } else {
-        res.status(404).json({ message: "No books found for this author" });
-    }
+    
+    // Create a Promise to get books by author
+    const getBooksByAuthor = new Promise((resolve, reject) => {
+        const booksByAuthor = Object.values(books)
+                                    .filter(book => book.author.toLowerCase() === author);
+        
+        if (booksByAuthor.length > 0) {
+            resolve(booksByAuthor);
+        } else {
+            reject(new Error("No books found for this author"));
+        }
+    });
+    
+    // Use Promise callbacks with .then() and .catch()
+    getBooksByAuthor
+        .then((booksList) => {
+            res.status(200).json(booksList);
+        })
+        .catch((error) => {
+            res.status(404).json({ message: error.message });
+        });
 });
 
 // Get all books based on title
